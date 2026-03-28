@@ -60,7 +60,7 @@ def get_grader():
 
 @app.post("/baseline")
 def run_baseline_endpoint():
-    from baseline import run_baseline
+    from inference import run_baseline
     try:
         scores = run_baseline()
         return {"baseline_scores": scores}
