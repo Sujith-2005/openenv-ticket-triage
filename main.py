@@ -11,6 +11,10 @@ app = FastAPI(title="OpenEnv Ticket Triage", description="A simulated environmen
 # Simple global state for standard evaluation
 current_env = None
 
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
+
 class ResetRequest(BaseModel):
     task_id: str = "task_1_easy"
 

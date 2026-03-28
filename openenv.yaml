@@ -12,10 +12,4 @@ tasks:
   - id: "task_3_hard"
     difficulty: "hard"
     description: "Triage 3 tickets, including one ambiguous ticket that requires asking the customer for more info before routing."
-endpoints:
-  - "/reset"
-  - "/step"
-  - "/state"
-  - "/tasks"
-  - "/grader"
-  - "/baseline"
+
