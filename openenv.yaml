@@ -1,0 +1,21 @@
+name: "customer-support-triage"
+version: "0.1.0"
+description: "A real-world environment where an agent triages and routes customer support tickets. The agent must read tickets, ask clarifying questions if needed, and route them to the correct department with the right priority and category."
+tags: ["text", "support", "triage", "classification"]
+tasks:
+  - id: "task_1_easy"
+    difficulty: "easy"
+    description: "Route a single clear technical support ticket."
+  - id: "task_2_medium"
+    difficulty: "medium"
+    description: "Route a batch of 3 tickets to appropriate departments."
+  - id: "task_3_hard"
+    difficulty: "hard"
+    description: "Triage 3 tickets, including one ambiguous ticket that requires asking the customer for more info before routing."
+endpoints:
+  - "/reset"
+  - "/step"
+  - "/state"
+  - "/tasks"
+  - "/grader"
+  - "/baseline"
