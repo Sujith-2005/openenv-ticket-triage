@@ -15,6 +15,25 @@ current_env = None
 def read_root():
     return {"status": "ok"}
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+@app.get("/metadata")
+def metadata():
+    return {
+        "name": "customer-support-triage",
+        "description": "Ticket routing OpenEnv"
+    }
+
+@app.get("/schema")
+def get_schema():
+    return {
+        "action": Action.model_json_schema(),
+        "observation": Observation.model_json_schema(),
+        "state": State.model_json_schema()
+    }
+
 class ResetRequest(BaseModel):
     task_id: str = "task_1_easy"
 
