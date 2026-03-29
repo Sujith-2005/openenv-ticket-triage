@@ -71,5 +71,8 @@ def run_baseline_endpoint():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Baseline failed: {str(e)}")
 
+def main():
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=7860)
+    main()
