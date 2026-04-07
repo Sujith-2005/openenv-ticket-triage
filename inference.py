@@ -110,7 +110,13 @@ def run_baseline() -> dict:
         scores[task_id] = score
     return scores
 
+def main() -> None:
+    import sys
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        task_id = sys.argv[1]
+        run_agent_on_task(task_id)
+    else:
+        run_baseline()
+
 if __name__ == "__main__":
-    print("Running baseline...", flush=True)
-    scores = run_baseline()
-    print("Baseline scores:", scores, flush=True)
+    main()
