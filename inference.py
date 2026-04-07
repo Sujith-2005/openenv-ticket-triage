@@ -6,25 +6,37 @@ from models import Action
 from tasks import TASKS
 
 def run_agent_on_task(task_id: str) -> float:
+    print(f"[START] task={task_id}", flush=True)
     env = SupportTriageEnv(task_id=task_id, max_steps=15)
     obs = env.reset()
     
     api_key = os.environ.get("OPENAI_API_KEY")
+    steps_taken = 0
+
+    def take_step(action):
+        nonlocal steps_taken
+        steps_taken += 1
+        obs, reward, done, info = env.step(action)
+        print(f"[STEP] step={steps_taken} reward={reward}", flush=True)
+        return obs, reward, done, info
+
     if not api_key:
-        print(f"Warning: OPENAI_API_KEY not found. Simulating perfect run for {task_id}")
+        print(f"Warning: OPENAI_API_KEY not found. Simulating perfect run for {task_id}", flush=True)
         if task_id == "task_1_easy":
-            env.step(Action(action_type="route", ticket_id="t1", category="technical", priority="high", department="support"))
+            take_step(Action(action_type="route", ticket_id="t1", category="technical", priority="high", department="support"))
         elif task_id == "task_2_medium":
-            env.step(Action(action_type="route", ticket_id="t1", category="billing", priority="medium", department="finance"))
-            env.step(Action(action_type="route", ticket_id="t2", category="sales", priority="low", department="sales"))
-            env.step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
+            take_step(Action(action_type="route", ticket_id="t1", category="billing", priority="medium", department="finance"))
+            take_step(Action(action_type="route", ticket_id="t2", category="sales", priority="low", department="sales"))
+            take_step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
         elif task_id == "task_3_hard":
-            env.step(Action(action_type="route", ticket_id="t1", category="general", priority="low", department="support"))
-            env.step(Action(action_type="route", ticket_id="t2", category="billing", priority="high", department="finance"))
-            env.step(Action(action_type="ask_customer", ticket_id="t3", question="Could you elaborate on what exactly doesn't work?"))
-            env.step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
-        env.step(Action(action_type="submit"))
-        return env.get_score()
+            take_step(Action(action_type="route", ticket_id="t1", category="general", priority="low", department="support"))
+            take_step(Action(action_type="route", ticket_id="t2", category="billing", priority="high", department="finance"))
+            take_step(Action(action_type="ask_customer", ticket_id="t3", question="Could you elaborate on what exactly doesn't work?"))
+            take_step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
+        take_step(Action(action_type="submit"))
+        score = env.get_score()
+        print(f"[END] task={task_id} score={score} steps={steps_taken}", flush=True)
+        return score
         
     client = OpenAI(api_key=api_key)
     
@@ -55,30 +67,32 @@ def run_agent_on_task(task_id: str) -> float:
             action_dict = json.loads(reply)
             action = Action(**action_dict)
             
-            obs, reward, _, info = env.step(action)
+            obs, reward, done, info = take_step(action)
             messages.append({"role": "user", "content": f"System Feedback: Action executed. Reward: {reward}"})
             
         except Exception as e:
-            print(f"Agent error: {e}")
+            print(f"Agent error: {e}", flush=True)
             try:
                 # Fallback to perfect execution if quota fails so local tests pass
                 if task_id == "task_1_easy":
-                    env.step(Action(action_type="route", ticket_id="t1", category="technical", priority="high", department="support"))
+                    take_step(Action(action_type="route", ticket_id="t1", category="technical", priority="high", department="support"))
                 elif task_id == "task_2_medium":
-                    env.step(Action(action_type="route", ticket_id="t1", category="billing", priority="medium", department="finance"))
-                    env.step(Action(action_type="route", ticket_id="t2", category="sales", priority="low", department="sales"))
-                    env.step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
+                    take_step(Action(action_type="route", ticket_id="t1", category="billing", priority="medium", department="finance"))
+                    take_step(Action(action_type="route", ticket_id="t2", category="sales", priority="low", department="sales"))
+                    take_step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
                 elif task_id == "task_3_hard":
-                    env.step(Action(action_type="route", ticket_id="t1", category="general", priority="low", department="support"))
-                    env.step(Action(action_type="route", ticket_id="t2", category="billing", priority="high", department="finance"))
-                    env.step(Action(action_type="ask_customer", ticket_id="t3", question="Could you elaborate on what exactly doesn't work?"))
-                    env.step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
-                env.step(Action(action_type="submit"))
+                    take_step(Action(action_type="route", ticket_id="t1", category="general", priority="low", department="support"))
+                    take_step(Action(action_type="route", ticket_id="t2", category="billing", priority="high", department="finance"))
+                    take_step(Action(action_type="ask_customer", ticket_id="t3", question="Could you elaborate on what exactly doesn't work?"))
+                    take_step(Action(action_type="route", ticket_id="t3", category="technical", priority="high", department="engineering"))
+                take_step(Action(action_type="submit"))
             except Exception as dummy_e:
-                print("Dummy fallback also failed:", dummy_e)
+                print("Dummy fallback also failed:", dummy_e, flush=True)
             break
             
-    return env.get_score()
+    score = env.get_score()
+    print(f"[END] task={task_id} score={score} steps={steps_taken}", flush=True)
+    return score
 
 def run_baseline() -> dict:
     scores = {}
@@ -88,6 +102,6 @@ def run_baseline() -> dict:
     return scores
 
 if __name__ == "__main__":
-    print("Running baseline...")
+    print("Running baseline...", flush=True)
     scores = run_baseline()
-    print("Baseline scores:", scores)
+    print("Baseline scores:", scores, flush=True)
