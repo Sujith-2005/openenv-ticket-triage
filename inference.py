@@ -5,12 +5,18 @@ from environment import SupportTriageEnv
 from models import Action
 from tasks import TASKS
 
+# Hackathon Required Constants
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
 def run_agent_on_task(task_id: str) -> float:
     print(f"[START] task={task_id}", flush=True)
     env = SupportTriageEnv(task_id=task_id, max_steps=15)
     obs = env.reset()
     
-    api_key = os.environ.get("OPENAI_API_KEY")
+    # Fallback appropriately parsing tokens
+    api_key = HF_TOKEN or os.environ.get("OPENAI_API_KEY")
     steps_taken = 0
 
     def take_step(action):
@@ -21,7 +27,7 @@ def run_agent_on_task(task_id: str) -> float:
         return obs, reward, done, info
 
     if not api_key:
-        print(f"Warning: OPENAI_API_KEY not found. Simulating perfect run for {task_id}", flush=True)
+        print(f"Warning: OPENAI_API_KEY or HF_TOKEN not found. Simulating perfect run for {task_id}", flush=True)
         if task_id == "task_1_easy":
             take_step(Action(action_type="route", ticket_id="t1", category="technical", priority="high", department="support"))
         elif task_id == "task_2_medium":
@@ -38,7 +44,10 @@ def run_agent_on_task(task_id: str) -> float:
         print(f"[END] task={task_id} score={score} steps={steps_taken}", flush=True)
         return score
         
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(
+        base_url=API_BASE_URL,
+        api_key=api_key
+    )
     
     messages = [
         {"role": "system", "content": "You are a customer support triage agent. Read tickets in the inbox, ask the customer questions if necessary, and then route them to the correct category, priority, and department.\\n\\nValid categories: 'billing', 'technical', 'sales', 'general'.\\nValid priorities: 'low', 'medium', 'high'.\\nValid departments: 'finance', 'engineering', 'sales', 'support'.\\n\\nWhen there are no more tickets in the inbox, or if you are stuck, output the 'submit' action.\\n\\nActions must be strictly valid JSON matching one of these payload structures (do not wrap in markdown quotes):\\n{\\\"action_type\\\": \\\"read\\\", \\\"ticket_id\\\": \\\"<id>\\\"}\\n{\\\"action_type\\\": \\\"ask_customer\\\", \\\"ticket_id\\\": \\\"<id>\\\", \\\"question\\\": \\\"<question text>\\\"}\\n{\\\"action_type\\\": \\\"route\\\", \\\"ticket_id\\\": \\\"<id>\\\", \\\"category\\\": \\\"<cat>\\\", \\\"priority\\\": \\\"<pri>\\\", \\\"department\\\": \\\"<dep>\\\"}\\n{\\\"action_type\\\": \\\"submit\\\"}"}
@@ -50,7 +59,7 @@ def run_agent_on_task(task_id: str) -> float:
         
         try:
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=MODEL_NAME,
                 messages=messages,
                 temperature=0.0
             )
