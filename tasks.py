@@ -78,14 +78,14 @@ TASKS = {
 def grade_submission(task_id: str, routed_tickets: Dict[str, Any]) -> float:
     """
     Grades the final routed_tickets dictionary against the expected routing.
-    Returns a score between 0.0 and 1.0.
+    Returns a score strictly between 0.0 and 1.0.
     """
     if task_id not in TASKS:
-        return 0.0
+        return 0.01
     
     expected = TASKS[task_id]["expected"]
     if not expected:
-        return 1.0
+        return 0.99
     
     total_tickets = len(expected)
     score_per_ticket = 1.0 / total_tickets
@@ -105,4 +105,5 @@ def grade_submission(task_id: str, routed_tickets: Dict[str, Any]) -> float:
             
             total_score += (correct_fields / 3.0) * score_per_ticket
             
-    return round(total_score, 2)
+    final_score = round(total_score, 2)
+    return max(0.01, min(0.99, final_score))

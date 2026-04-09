@@ -20,8 +20,8 @@ def run_agent_on_task(task_id: str) -> float:
         obs = env.reset()
     except Exception:
         print("[STEP] step=1 reward=0.0", flush=True)
-        print(f"[END] task={task_id} score=0.0 steps=1", flush=True)
-        return 0.0
+        print(f"[END] task={task_id} score=0.01 steps=1", flush=True)
+        return 0.01
 
     api_key = HF_TOKEN or os.environ.get("OPENAI_API_KEY", "dummy_key")
     steps_taken = 0
